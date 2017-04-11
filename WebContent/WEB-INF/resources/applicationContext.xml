@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:c="http://www.springframework.org/schema/c"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context-4.1.xsd
+    http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx-4.1.xsd">
+
+	<context:property-placeholder location="classpath:/database.properties" />
+	<context:component-scan base-package="edu.njit.cs673.portfoliooptimizer.dao" />
+	<context:component-scan base-package="edu.njit.cs673.portfoliooptimizer.service" />
+	<context:component-scan base-package="edu.njit.cs673.portfoliooptimizer.controller" />
+
+	<bean id="objectMapper"
+		class="org.springframework.http.converter.json.Jackson2ObjectMapperFactoryBean"
+		p:indentOutput="true" p:simpleDateFormat="yyyy-MM-dd'T'HH:mm:ss.SSSZ"></bean>
+	<mvc:annotation-driven>
+		<mvc:message-converters>
+			<bean
+				class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+				<property name="objectMapper" ref="objectMapper" />
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+
+	<!-- <context:annotation-config /> -->
+	<!-- <bean id="jacksonMessageConverter" class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"></bean> 
+		<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"> 
+		<property name="messageConverters"> <list> <ref bean="jacksonMessageConverter" 
+		/> </list> </property> </bean> -->
+
+
+	<!-- <bean id="sftpSessionFactory" class="org.springframework.integration.sftp.session.DefaultSftpSessionFactory"> 
+		<property name="host" value="etsvcln1231.etslan.org" /> <property name="port" 
+		value="22" /> <property name="user" value="" /> <property name="password" 
+		value="" /> </bean> -->
+
+	<bean id="prophetDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="url"
+			value="jdbc:oracle:thin:@prophet.njit.edu:1521:course" />
+		<property name="username" value="tmp33" />
+		<property name="password" value="sophism26" />
+<!-- 		<property name="username" value="snp59" />
+		<property name="password" value="1sepQCyx2" />
+ -->		
+ 		<property name="initialSize" value="5" />
+		<property name="maxActive" value="10" />
+	</bean>
+
+	<bean id="pmSessionFactory"
+		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="prophetDataSource" />
+		<property name="annotatedClasses">
+			<list>
+				<value>edu.njit.c673.portfoliooptimizer.model.Investor</value>
+				<value>edu.njit.c673.portfoliooptimizer.model.Portfolio</value>
+				<value>edu.njit.c673.portfoliooptimizer.model.Transaction</value>
+				<value>edu.njit.c673.portfoliooptimizer.model.TransactionType
+				</value>
+				<value>edu.njit.c673.portfoliooptimizer.model.PortfolioStock</value>
+				<value>edu.njit.c673.portfoliooptimizer.model.StockExchangeType
+				</value>
+				<value>edu.njit.c673.portfoliooptimizer.model.StockInventory
+				</value>
+			</list>
+		</property>
+		<!-- <property name="mappingResources"> <list> <value>queries.hbm.xml</value> 
+			</list> </property> -->
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.Oracle12cDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.hbm2ddl.auto"></prop>
+				<prop key="hibernate.enable_lazy_load_no_trans">true</prop>
+				<prop key="hibernate.connection.release_mode">after_transaction</prop>
+				
+			</props>
+		</property>
+	</bean>
+
+	<bean id="template" class="org.springframework.orm.hibernate5.HibernateTemplate">
+		<property name="sessionFactory" ref="pmSessionFactory"></property>
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="pmSessionFactory" />
+	</bean>
+
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basename" value="messages" />
+	</bean>
+
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<bean class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping" />
+
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/jsp/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+
+</beans>
